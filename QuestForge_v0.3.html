@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuestForge</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(135deg,#06152e,#0b4aa2);color:#fff;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:14px;padding:11px 15px;background:#1976d2;color:#fff;font-weight:800;box-shadow:0 4px 12px #0003}
+button:hover{filter:brightness(1.1)}
+button.danger{background:#b52a3a}button.good{background:#1d9b5d}button.goldbtn{background:#9a6b00}
+.app{max-width:1100px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.brand{font-size:28px;font-weight:900}
+.coins{display:flex;gap:7px;flex-wrap:wrap}.coin{padding:8px 11px;border-radius:20px;background:#ffffff18;font-weight:800}.bronze{color:#e6a15a}.gold{color:#ffd84d}.diamond{color:#9ff7ff}.ruby{color:#ff75b9}
+.card{background:#ffffff12;border:1px solid #ffffff22;border-radius:20px;padding:18px;margin-bottom:16px;backdrop-filter:blur(8px)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.nav{min-height:120px;text-align:left;font-size:18px;background:linear-gradient(145deg,#1674d1,#164a9a)}.nav small{display:block;font-weight:400;opacity:.8;margin-top:8px}
+.back{margin-bottom:14px;background:#ffffff18}.muted{opacity:.75}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.tag{padding:5px 9px;border-radius:10px;background:#ffffff18;font-size:12px}.task{border-left:5px solid #4bb3ff}.task h3{margin:0 0 6px}.reward{font-weight:800}.timer{font-size:22px;font-weight:900}.success{color:#9dffb0}
+.input,select{width:100%;padding:12px;border-radius:12px;border:1px solid #ffffff30;background:#071a37;color:#fff;margin:6px 0 12px}.avatar{font-size:50px}.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.modalbox{max-width:520px;width:100%;max-height:90vh;overflow:auto;background:#09224a;border:1px solid #ffffff2b;border-radius:22px;padding:22px}
+.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.tabs button{white-space:nowrap;background:#ffffff18}.tabs button.on{background:#1976d2}
+.progress{height:10px;border-radius:10px;background:#ffffff18;overflow:hidden}.progress>i{display:block;height:100%;background:#56b7ff}.deal{border:2px solid #ffd84d;background:linear-gradient(145deg,#6e4b00aa,#ffffff12);transform:scale(1.01)}.deal h2{margin-top:0}.itemicon{font-size:36px}.shopgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.footer{opacity:.6;text-align:center;font-size:12px;margin:24px}
+@media(max-width:600px){.brand{font-size:23px}.app{padding:12px}}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<div id="modal" class="modal hidden"><div id="modalBox" class="modalbox"></div></div>
+<script>
+const ADMIN_USER="Void",ADMIN_PASS="Void8910strawberrymilk";
+const R={
+"Super Easy":{min:5,drop:0,bc:3,xp:10},"Easy":{min:10,drop:0,bc:5,xp:15},
+"Medium Short":{min:15,drop:0,bc:10,xp:30},"Medium Long":{min:25,drop:10,bc:15,xp:40},
+"Hard Short":{min:30,drop:10,bc:25,xp:60},"Hard Long":{min:45,drop:10,bc:45,xp:100},
+"Super Hard":{min:60,drop:10,bc:75,xp:150},"Insane":{min:60,drop:10,bc:100,xp:300}};
+const SHOP=[
+{name:"Free Pass",tier:1,price:3,dur:"5 hours",mins:300,icon:"🎟️",type:"pass"},
+{name:"Free Pass",tier:2,price:6,dur:"10 hours",mins:600,icon:"🎟️",type:"pass"},
+{name:"Free Pass",tier:3,price:15,dur:"Entire day",mins:1440,icon:"🎟️",type:"pass"},
+{name:"Shield",tier:1,price:6,dur:"5 hours",mins:300,icon:"🛡️",type:"shield"},
+{name:"Shield",tier:2,price:12,dur:"10 hours",mins:600,icon:"🛡️",type:"shield"},
+{name:"Shield",tier:3,price:30,dur:"Entire day",mins:1440,icon:"🛡️",type:"shield"},
+{name:"Game Pass",tier:1,price:25,dur:"30 minutes • Skate • Fall Guys • Fortnite",mins:30,icon:"🎮",type:"game"},
+{name:"Game Pass",tier:2,price:50,dur:"1 hour • Tier 1 + Minecraft offline • GTA V offline • Ultimate Chicken Horse",mins:60,icon:"🎮",type:"game"},
+{name:"Stay Pass",tier:1,price:5,dur:"5 minutes",mins:5,icon:"🏠",type:"stay"},
+{name:"Stay Pass",tier:2,price:20,dur:"30 minutes",mins:30,icon:"🏠",type:"stay"},
+{name:"Stay Pass",tier:3,price:50,dur:"Entire day",mins:1440,icon:"🏠",type:"stay"},
+{name:"XP Pass",tier:1,price:10,dur:"10 XP",xp:10,icon:"⭐",type:"xp"},
+{name:"XP Pass",tier:2,price:25,dur:"50 XP",xp:50,icon:"⭐",type:"xp"},
+{name:"XP Pass",tier:3,price:60,dur:"100 XP",xp:100,icon:"⭐",type:"xp"},
+{name:"Outside Pass",tier:1,price:20,dur:"10–30 minutes outside",minOutside:10,maxOutside:30,icon:"🌳",type:"outside"},
+{name:"Outside Pass",tier:2,price:35,dur:"20–60 minutes outside",minOutside:20,maxOutside:60,icon:"🌳",type:"outside"},
+{name:"Lucky Block",tier:1,price:15,dur:"Open for a random shop item or XP Pass",icon:"🎁",type:"lucky"}];
+const QUESTS=[
+["Spend at least 30 Bronze Coins",50,5,"spend",30],
+["Spend at least 20 Bronze Coins",30,3,"spend",20],
+["Spend at least 10 Bronze Coins",15,1,"spend",10],
+["Earn at least 30 Bronze Coins",50,5,"earn",30],
+["Earn at least 20 Bronze Coins",30,3,"earn",20],
+["Earn at least 10 Bronze Coins",15,1,"earn",10],
+["Complete at least 3 tasks",50,5,"complete",3],
+["Complete at least 2 tasks",30,3,"complete",2],
+["Complete at least 1 task",15,1,"complete",1],
+["Earn at least 20 XP",50,5,"xpearn",20],
+["Earn at least 10 XP",30,3,"xpearn",10],
+["Level up once",50,5,"level",1]
+];
+const AVATARS=["🧑‍🚀","😎","🤖","👾","🦊","🐼","🐸","🐯","🦁","🐺","🐲","🧙","🧛","🧟","🦸","🧑‍🎨","🧑‍🔬","🥷","🎮","👽"];
+let db=JSON.parse(localStorage.getItem("questforge")||"null")||{
+ profile:{name:"Player",level:1,xp:0,bronze:0,gold:0,diamond:0,ruby:0,avatar:"🧑‍🚀"},
+ tasks:[],history:[],inventory:[],requests:[],settings:{music:true,volume:35},next:1,
+ questState:{date:"",items:[]}, stats:{earnedBC:0,spentBC:0,earnedXP:0,completed:0},
+ daily:{earnedBC:0,spentBC:0,earnedXP:0,completed:0,levelStart:1}
+};
+if(db.profile.ruby==null)db.profile.ruby=0;
+if(!db.stats)db.stats={earnedBC:0,spentBC:0,earnedXP:0,completed:0};
+if(!db.daily)db.daily={earnedBC:0,spentBC:0,earnedXP:0,completed:0,levelStart:db.profile.level};
+if(!db.settings)db.settings={music:true,volume:35};
+const save=()=>localStorage.setItem("questforge",JSON.stringify(db));
+const newId=()=>db.next++;
+const need=()=>100+(db.profile.level-1)*10;
+function addXP(n){if(!n)return;db.profile.xp+=n;db.stats.earnedXP+=n;db.daily.earnedXP+=n;while(db.profile.xp>=need()){db.profile.xp-=need();db.profile.level++;db.profile.bronze+=5+db.profile.level;db.stats.earnedBC+=5+db.profile.level;db.daily.earnedBC+=5+db.profile.level;}}
+function bcTotal(){return db.profile.bronze+db.profile.gold*10+db.profile.diamond*50+db.profile.ruby*100}
+function fmtCost(bc){let out=[];let d=Math.floor(bc/50);bc%=50;let g=Math.floor(bc/10);bc%=10;if(d)out.push("💎 "+d);if(g)out.push("🟡 "+g);if(bc)out.push("🟤 "+bc);return out.join(" + ")||"Free"}
+function coins(){return `<div class="coins"><span class="coin bronze">🟤 ${db.profile.bronze}</span><span class="coin gold">🟡 ${db.profile.gold}</span><span class="coin diamond">💎 ${db.profile.diamond}</span><span class="coin ruby">🔴 ${db.profile.ruby}</span></div>`}
+function layout(c){document.getElementById("app").innerHTML=`<div class="top"><div class="brand">⚔️ QuestForge</div>${coins()}</div>${c}<div class="footer">QuestForge v0.3 • saved on this device</div>`}
+function home(){layout(`<div class="card row"><div><div class="avatar">${db.profile.avatar}</div><b>${db.profile.name}</b><div class="muted">Level ${db.profile.level} • ${db.profile.xp}/${need()} XP</div></div><div><button onclick="stats()">👤</button> <button onclick="settings()">⚙️</button></div></div><div class="grid">
+<button class="nav" onclick="current()">⏱️ Current Tasks<small>Active tasks and time until reward downgrades</small></button>
+<button class="nav" onclick="available()">📋 Available Tasks<small>Tasks ready to accept</small></button>
+<button class="nav" onclick="shop()">🛒 Shop<small>Passes, shields, deals and trade-ins</small></button>
+<button class="nav" onclick="inventory()">🎒 Inventory<small>Use items and watch active timers</small></button>
+<button class="nav" onclick="quests()">📜 Daily Quests<small>Five rotating quests every day</small></button>
+<button class="nav" onclick="historyPage()">📚 Completed / Past<small>Previous tasks and rewards</small></button></div>`)}
+function stats(){layout(`<button class="back" onclick="home()">← Back</button><div class="card"><h2>👤 Account Stats</h2><div class="avatar">${db.profile.avatar}</div><h3>${db.profile.name}</h3><p>⭐ Level ${db.profile.level}</p><p>XP: ${db.profile.xp}/${need()}</p>${coins()}<p class="muted">Total Bronze-equivalent wealth: ${bcTotal()} BC</p><button onclick="rename()">✏️ Change Name</button> <button onclick="avatars()">🧑‍🎨 Avatar</button></div>`)}
+function rename(){open(`<h2>Change Name</h2><input id="nn" class="input" placeholder="New name"><button onclick="doRename()">Save</button> <button onclick="closeM()">Cancel</button>`)}
+function doRename(){let n=document.getElementById("nn").value.trim();if(n){db.profile.name=n;save();closeM();stats()}}
+function avatars(){open(`<h2>🧑‍🎨 Choose Avatar</h2><div class="grid">${AVATARS.map(a=>`<button onclick="setAvatar('${a}')">${a}</button>`).join("")}</div><br><button onclick="closeM()">Close</button>`)}
+function setAvatar(a){db.profile.avatar=a;save();closeM();stats()}
+function settings(){layout(`<button class="back" onclick="home()">← Back</button><div class="card"><h2>⚙️ Settings</h2><p>🎵 Music: ${db.settings.music?"On":"Off"}</p><input type="range" min="0" max="100" value="${db.settings.volume}" oninput="db.settings.volume=this.value;save();"><button onclick="db.settings.music=!db.settings.music;save();settings()">Toggle Music</button><hr><button onclick="adminLogin()">🔐 Admin Version</button></div>`)}
+function adminLogin(){open(`<h2>Admin Version</h2><input id="au" class="input" placeholder="Username"><input id="ap" type="password" class="input" placeholder="Password"><button onclick="checkAdmin()">Enter</button> <button onclick="closeM()">Cancel</button>`)}
+function checkAdmin(){if(document.getElementById("au").value===ADMIN_USER&&document.getElementById("ap").value===ADMIN_PASS){closeM();admin()}else alert("Incorrect login.")}
+function available(){let a=db.tasks.filter(t=>t.status==="available");layout(`<button class="back" onclick="home()">← Back</button><h2>📋 Available Tasks</h2>${a.length?a.map(t=>task(t,true)).join(""):`<div class="card muted">No tasks available.</div>`}`)}
+function current(){let a=db.tasks.filter(t=>t.status==="active"||t.status==="submitted");layout(`<button class="back" onclick="home()">← Back</button><h2>⏱️ Current Tasks</h2>${a.length?a.map(t=>task(t,false)).join(""):`<div class="card muted">No current tasks.</div>`}`);tick()}
+function rewardObj(t,elapsed){let r=R[t.rarity], mins=elapsed/60000, drops=r.drop?Math.floor(Math.max(0,mins-r.min)/10):0, pct=Math.max(0,1-drops*.1), raw=Math.floor(r.bc*pct);return {raw,pct,drops}}
+function rewardDisplay(bc){return fmtCost(bc)}
+function awardTaskReward(raw){let n=Math.max(0,Math.floor(raw));let g=Math.floor(n/10);let b=n%10;db.profile.gold+=g;db.profile.bronze+=b;db.stats.earnedBC+=n;db.daily.earnedBC+=n}
+function task(t,canAccept){let r=R[t.rarity],e=t.status==="active"?Date.now()-t.started:(t.paused||0),m=Math.floor(e/60000),s=Math.floor(e/1000)%60,z=rewardObj(t,e),until=r.drop?Math.max(0,(r.min+(z.drops+1)*10)*60000-e):null;return `<div class="card task"><div class="row"><div><span class="tag">${t.rarity}</span><h3>${t.prompt}</h3><div>Target ${r.min} min • Full reward ${rewardDisplay(r.bc)} • ${r.xp} XP</div>${r.drop?`<div class="muted">Current reward: ${rewardDisplay(z.raw)} • Next downgrade in ${until?Math.ceil(until/60000):0} min</div>`:"<div class=\"muted\">No reward downgrade.</div>"}</div><div class="timer">${m}:${String(s).padStart(2,"0")}</div></div>${canAccept?`<button onclick="accept(${t.id})">▶️ Accept Task</button>`:t.status==="active"?`<button onclick="submit(${t.id})">✅ I'm Done</button>`:`<div class="success">📨 Submitted — timer paused; waiting for admin.</div>`}</div>`}
+function accept(i){let t=db.tasks.find(x=>x.id===i);t.status="active";t.started=Date.now();t.paused=0;save();current()}
+function submit(i){let t=db.tasks.find(x=>x.id===i);t.paused=Date.now()-t.started;t.status="submitted";db.requests.push({id:newId(),type:"complete_task",taskId:i,status:"pending"});save();current()}
+function tick(){if(document.querySelector(".timer"))setTimeout(()=>{if(document.querySelector(".timer")){current()}},1000)}
+function historyPage(){layout(`<button class="back" onclick="home()">← Back</button><h2>📚 Completed / Past</h2>${db.history.length?db.history.slice().reverse().map(h=>`<div class="card"><b>${h.prompt}</b><div>${h.rarity} • ${rewardDisplay(h.reward)} • ${h.xp} XP • ${h.percent||100}% complete</div><div class="muted">${new Date(h.date).toLocaleString()}</div></div>`).join(""):`<div class="card muted">No past tasks.</div>`}`)}
+function shop(tab="shop"){let featured=lto();let body=tab==="shop"?`<div class="card"><h3>🔥 Limited Time Offer</h3>${featured}</div><div class="shopgrid">${SHOP.map((s,i)=>shopCard(s,i)).join("")}</div>`:tab==="trade"?tradePage():`<div class="card"><h3>🔥 Featured Deal</h3>${featured}</div>`;layout(`<button class="back" onclick="home()">← Back</button><h2>🛒 Shop</h2><div class="tabs"><button class="${tab==="shop"?"on":""}" onclick="shop('shop')">🛍️ Shop</button><button class="${tab==="trade"?"on":""}" onclick="shop('trade')">🔄 Trade-In</button><button class="${tab==="deals"?"on":""}" onclick="shop('deals')">🔥 LTO</button></div>${body}`)}
+function shopCard(s,i){let deal=getDeal(i);let price=deal?Math.floor(s.price*(1-deal.discount/100)):s.price;return `<div class="card ${deal?"deal":""}"><div class="itemicon">${s.icon}</div><b>${s.name} Tier ${s.tier}</b><p class="muted">${s.dur}</p>${deal?`<p>🔥 ${deal.label}</p><p><s>${fmtCost(s.price)}</s> → <b>${fmtCost(price)}</b></p>`:`<p>${fmtCost(s.price)}</p>`}<button onclick="buy(${i},${price},${!!deal?.bogo})">Buy</button></div>`}
+function hourKey(){return Math.floor(Date.now()/3600000)}
+function seeded(n){let x=Math.sin(n*99991)*10000;return x-Math.floor(x)}
+function getDeal(i){let s=SHOP[i];if(!s)return null;let cheap=s.price<=6,expensive=s.price>=30;if(!cheap&&!expensive)return null;let seed=seeded(hourKey()*97+i*13);if(seed>.42)return null;if(seed<.14)return {discount:25,label:"25% OFF",bogo:false};if(seed<.28)return {discount:0,label:"BUY ONE GET ONE FREE",bogo:true};return {discount:10,label:"10% OFF",bogo:false}}
+function lto(){let i=Math.floor(seeded(hourKey()*3)*SHOP.length),s=SHOP[i],d=getDeal(i);if(!d){for(let j=0;j<SHOP.length;j++){let k=(i+j)%SHOP.length;if(getDeal(k)){i=k;s=SHOP[i];d=getDeal(i);break}}}if(!d)return `<p class="muted">No special deal this hour. Check back next refresh!</p>`;let price=Math.floor(s.price*(1-d.discount/100));return `<div class="row"><div><div class="itemicon">${s.icon}</div><h2>${s.name} Tier ${s.tier}</h2><p>${s.dur}</p><p><s>${fmtCost(s.price)}</s> → <b>${fmtCost(price)}</b></p></div><button onclick="buy(${i},${price},${!!d?.bogo})">Grab Deal</button></div><p class="muted">Shop refreshes every hour.</p>`}
+function tradePage(){return `<div class="card"><h3>🪙 Currency Exchange</h3><p>10 Bronze = 1 Gold • 5 Gold = 1 Diamond • 2 Diamond = 1 Ruby</p>${["bronze","gold","diamond","ruby"].map(c=>`<p>${c==="bronze"?"🟤 Bronze":c==="gold"?"🟡 Gold":c==="diamond"?"💎 Diamond":"🔴 Ruby"}: ${db.profile[c]}</p>`).join("")}<button onclick="convert('b2g')">10 🟤 → 1 🟡</button> <button onclick="convert('g2b')">1 🟡 → 10 🟤</button><br><br><button onclick="convert('g2d')">5 🟡 → 1 💎</button> <button onclick="convert('d2g')">1 💎 → 5 🟡</button><br><br><button onclick="convert('d2r')">2 💎 → 1 🔴</button> <button onclick="convert('r2d')">1 🔴 → 2 💎</button></div><div class="card"><h3>♻️ Item Trade-In</h3>${db.inventory.length?db.inventory.map((x,i)=>`<div class="row"><span>${x.icon||"📦"} ${x.name} Tier ${x.tier}<br><small>65% value → ${fmtCost(Math.floor((x.price||0)*.65))}</small></span><button onclick="tradeItem(${i})">Trade In</button></div>`).join(""):`<span class="muted">No items to trade.</span>`}</div>`}
+function convert(x){if(x==="b2g"&&db.profile.bronze>=10){db.profile.bronze-=10;db.profile.gold++}else if(x==="g2b"&&db.profile.gold){db.profile.gold--;db.profile.bronze+=10}else if(x==="g2d"&&db.profile.gold>=5){db.profile.gold-=5;db.profile.diamond++}else if(x==="d2g"&&db.profile.diamond){db.profile.diamond--;db.profile.gold+=5}else if(x==="d2r"&&db.profile.diamond>=2){db.profile.diamond-=2;db.profile.ruby++}else if(x==="r2d"&&db.profile.ruby){db.profile.ruby--;db.profile.diamond+=2}else return alert("Not enough currency.");save();shop("trade")}
+function buy(i,priceOverride,bogo=false){let s=SHOP[i],price=priceOverride??s.price;if(bcTotal()<price)return alert("Not enough total currency.");spendBCValue(price);if(s.type==="xp"){addXP(s.xp)}else{db.inventory.push({...s,id:newId(),price:s.price,active:false});if(bogo)db.inventory.push({...s,id:newId(),price:s.price,active:false})}save();shop()}
+function spendBCValue(v){let original=v;while(v>0){if(db.profile.bronze){let n=Math.min(db.profile.bronze,v);db.profile.bronze-=n;v-=n;if(!v)break}if(db.profile.gold){if(v>=10){db.profile.gold--;v-=10;continue}else{db.profile.gold--;db.profile.bronze+=10-v;v=0;break}}if(db.profile.diamond){if(v>=50){db.profile.diamond--;v-=50;continue}else{db.profile.diamond--;db.profile.gold+=5;continue}}if(db.profile.ruby){if(v>=100){db.profile.ruby--;v-=100;continue}else{db.profile.ruby--;db.profile.diamond+=2;continue}}throw new Error("Currency conversion error")}db.stats.spentBC+=original;db.daily.spentBC+=original}
+function inventory(){let active=db.inventory.filter(x=>x.active);layout(`<button class="back" onclick="home()">← Back</button><h2>🎒 Inventory</h2>${db.inventory.length?db.inventory.map((x,i)=>itemCard(x,i)).join(""):`<div class="card muted">Inventory empty.</div>`}`);inventoryTick()}
+function itemCard(x,i){let left=x.active&&x.endAt?Math.max(0,x.endAt-Date.now()):0;let txt=x.active?(left>0?`⏳ ${timeText(left)}`:"⌛ Expired"):x.duration;return `<div class="card row"><div><div class="itemicon">${x.icon||"📦"}</div><b>${x.name} Tier ${x.tier}</b><div class="muted">${txt}</div>${x.active&&x.paused?`<div>⏸️ Pause requested</div>`:""}</div>${x.active?`<button onclick="requestPause(${i})">⏸️ Request Pause</button>`:`<button onclick="useItem(${i})">Use</button>`}</div>`}
+function timeText(ms){let s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600);s%=3600;let m=Math.floor(s/60);s%=60;return `${h?String(h).padStart(2,"0")+":":""}${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
+function useItem(i){let x=db.inventory[i];if(!x)return;if(x.type==="lucky"){openLucky(i);return}if(x.type==="outside"){let mins=prompt(`Choose outside time (${x.minOutside}-${x.maxOutside} minutes):`,x.minOutside);mins=Number(mins);if(!Number.isFinite(mins)||mins<x.minOutside||mins>x.maxOutside)return alert("Choose a valid duration.");db.requests.push({id:newId(),type:"use_item",inventoryIndex:i,status:"pending",requestedMinutes:mins});}else db.requests.push({id:newId(),type:"use_item",inventoryIndex:i,status:"pending"});save();alert("Use request sent to Admin Version.");inventory()}
+function openLucky(i){let x=db.inventory[i],roll=Math.random()*100,cap=roll<1?300:roll<11?250:roll<26?150:roll<41?100:50;let eligible=SHOP.filter(s=>s.price<=cap&&s.type!=="lucky");if(!eligible.length)return;let prize=eligible[Math.floor(Math.random()*eligible.length)];x.opened=true;x.active=false;db.inventory.splice(i,1);if(prize.type==="xp"){addXP(prize.xp);alert(`🎁 Lucky Block opened! You won ${prize.xp} XP!`)}else{db.inventory.push({...prize,id:newId(),price:prize.price,active:false});alert(`🎁 Lucky Block opened! You won ${prize.icon} ${prize.name} Tier ${prize.tier}!`)}save();inventory()}
+function requestPause(i){db.requests.push({id:newId(),type:"pause_item",inventoryIndex:i,status:"pending"});save();alert("Pause request sent to Admin.");inventory()}
+function inventoryTick(){if(document.querySelector(".itemicon"))setTimeout(()=>{if(document.querySelector(".itemicon")){inventoryTick();inventory()}},1000)}
+function quests(){ensureQuests();layout(`<button class="back" onclick="home()">← Back</button><h2>📜 Daily Quests</h2><p class="muted">Five quests refresh each day. Complete them, then claim the reward.</p>${db.questState.items.map((q,i)=>{let prog=questProgress(q),done=prog>=q[4],claimed=!!db.questState.claimed[i];return `<div class="card"><div class="row"><div><b>${done?"✅":"📜"} ${q[0]}</b><div class="muted">Reward: ⭐ ${q[1]} XP + 🟤 ${q[2]} BC</div></div><span>${Math.min(q[4],prog)}/${q[4]}</span></div><div class="progress"><i style="width:${Math.min(100,prog/q[4]*100)}%"></i></div><br>${done&&!claimed?`<button class="good" onclick="claimQuest(${i})">🎁 Claim Reward</button>`:claimed?`<span class="success">Reward claimed!</span>`:""}</div>`}).join("")}`)}
+function claimQuest(i){ensureQuests();let q=db.questState.items[i];if(!q||db.questState.claimed[i]||questProgress(q)<q[4])return;db.questState.claimed[i]=true;db.profile.bronze+=q[2];db.stats.earnedBC+=q[2];db.daily.earnedBC+=q[2];addXP(q[1]);save();quests()}
+function ensureQuests(){let d=new Date().toISOString().slice(0,10);if(db.questState.date!==d){let arr=[...QUESTS],chosen=[];while(chosen.length<5&&arr.length){chosen.push(arr.splice(Math.floor(Math.random()*arr.length),1)[0])}db.questState={date:d,items:chosen,claimed:{}};db.daily={earnedBC:0,spentBC:0,earnedXP:0,completed:0,levelStart:db.profile.level};save()}}
+function questProgress(q){let type=q[3],target=q[4];if(type==="spend")return Math.min(target,db.daily.spentBC);if(type==="earn")return Math.min(target,db.daily.earnedBC);if(type==="complete")return Math.min(target,db.daily.completed);if(type==="xpearn")return Math.min(target,db.daily.earnedXP);if(type==="level")return Math.max(0,db.profile.level-db.daily.levelStart)>0?1:0;return 0}
+function admin(){let q=db.requests.filter(x=>x.status==="pending");layout(`<div class="row"><button onclick="home()">← Player View</button><h2>🛠️ Admin</h2></div>
+<div class="card"><h3>💰 Player Economy</h3>${coins()}<div class="grid"><input id="ab" class="input" type="number" placeholder="Bronze balance"><input id="ag" class="input" type="number" placeholder="Gold balance"><input id="ad" class="input" type="number" placeholder="Diamond balance"><input id="ar" class="input" type="number" placeholder="Ruby balance"></div><button onclick="setBalance()">Set Balances</button><input id="ax" class="input" type="number" placeholder="Add XP (optional)"><button onclick="giveXP()">Give XP</button></div>
+<div class="card"><h3>➕ Create Task</h3><input id="tp" class="input" placeholder="Example: Do the dishes (put away and put in)"><select id="rr" class="input">${Object.keys(R).map(x=>`<option>${x}</option>`).join("")}</select><div id="rpreview" class="muted"></div><button onclick="createTask()">Create Task</button></div>
+<div class="card"><h3>📨 Requests (${q.length})</h3>${q.length?q.map(request).join(""):`<span class="muted">Nothing waiting.</span>`}</div>
+<div class="card"><h3>📋 Tasks</h3>${db.tasks.map(t=>{let r=R[t.rarity];return `<div class="card"><div><b>${t.prompt}</b><div>${t.rarity} • ${r.min} min • Full reward ${rewardDisplay(r.bc)} • ${r.xp} XP • ${t.status}</div></div><div><button onclick="editTask(${t.id})">✏️ Edit</button> <button class="danger" onclick="deleteTask(${t.id})">🗑️ Delete</button>${t.status==="active"?` <button onclick="override(${t.id})">Override</button>`:""}</div></div>`}).join("")||"<span class=\"muted\">No tasks.</span>"}</div>
+<div class="card"><h3>🎒 Inventory</h3>${db.inventory.map((x,i)=>`<div class="row"><span>${x.icon||"📦"} ${x.name} Tier ${x.tier} — ${x.active?"ACTIVE":"unused"}</span>${x.active?`<button onclick="endItem(${i})">End</button>`:""}</div>`).join("")||"Empty."}</div>`);document.getElementById("rr").onchange=showRewardPreview;showRewardPreview()}
+function showRewardPreview(){let r=R[document.getElementById("rr").value];document.getElementById("rpreview").textContent=`⏱️ ${r.min} minutes • 🏆 ${rewardDisplay(r.bc)} • ⭐ ${r.xp} XP${r.drop?", 10% downgrade every 10 minutes late":", no downgrades"}`}
+function setBalance(){["bronze","gold","diamond","ruby"].forEach(c=>{let id={bronze:"ab",gold:"ag",diamond:"ad",ruby:"ar"}[c],v=document.getElementById(id).value;if(v!=="")db.profile[c]=Math.max(0,Number(v))});save();admin()}
+function giveXP(){let n=Number(document.getElementById("ax").value||0);if(n>0)addXP(n);save();admin()}
+function createTask(){let p=document.getElementById("tp").value.trim(),r=document.getElementById("rr").value;if(!p)return alert("Enter a task prompt.");db.tasks.push({id:newId(),prompt:p,rarity:r,status:"available"});save();admin()}
+function editTask(id){let t=db.tasks.find(x=>x.id===id);if(!t)return;let p=prompt("Task prompt:",t.prompt);if(p!==null)t.prompt=p.trim()||t.prompt;let r=prompt("Rarity:",t.rarity);if(r&&R[r])t.rarity=r;save();admin()}
+function deleteTask(id){if(confirm("Delete this task?")){db.tasks=db.tasks.filter(t=>t.id!==id);save();admin()}}
+function request(q){if(q.type==="complete_task"){let t=db.tasks.find(x=>x.id===q.taskId);return `<div class="card"><b>✅ Complete Task</b><p>${t?t.prompt:"Missing task"}</p><label>Completion: <input id="pct${q.id}" class="input" type="number" min="0" max="100" value="100"></label><button class="good" onclick="approve(${q.id})">Approve</button> <button class="danger" onclick="reject(${q.id})">Reject</button></div>`}if(q.type==="pause_item"){let x=db.inventory[q.inventoryIndex];return `<div class="card"><b>⏸️ Pause Item</b><p>${x?x.name+" Tier "+x.tier:"Missing item"}</p><button class="good" onclick="approvePause(${q.id})">Approve</button> <button class="danger" onclick="reject(${q.id})">Reject</button></div>`}let x=db.inventory[q.inventoryIndex];return `<div class="card"><b>🎒 Use Item</b><p>${x?x.name+" Tier "+x.tier:"Missing item"}</p>${q.requestedMinutes?`<p>Requested: ${q.requestedMinutes} minutes</p>`:""}<button class="good" onclick="approveItem(${q.id})">Approve</button> <button class="danger" onclick="reject(${q.id})">Reject</button></div>`}
+function approve(qid){let q=db.requests.find(x=>x.id===qid),t=db.tasks.find(x=>x.id===q.taskId);if(!t)return;let r=R[t.rarity],elapsed=t.paused||0,z=rewardObj(t,elapsed),percent=Math.max(0,Math.min(100,Number(document.getElementById("pct"+qid)?.value||100))),raw=Math.floor(z.raw*percent/100);t.status="completed";q.status="approved";awardTaskReward(raw);addXP(Math.floor(r.xp*percent/100));db.stats.completed++;db.daily.completed++;db.history.push({prompt:t.prompt,rarity:t.rarity,reward:raw,xp:Math.floor(r.xp*percent/100),percent,date:Date.now()});save();admin()}
+function approveItem(qid){let q=db.requests.find(x=>x.id===qid),x=db.inventory[q.inventoryIndex];if(!x)return;q.status="approved";let mins=q.requestedMinutes||x.mins||0;if(mins>0){x.active=true;x.paused=false;x.startedAt=Date.now();x.endAt=Date.now()+mins*60000}else{x.active=true}save();admin()}
+function approvePause(qid){let q=db.requests.find(x=>x.id===qid),x=db.inventory[q.inventoryIndex];if(!x)return;q.status="approved";x.paused=true;if(x.endAt)x.remaining=Math.max(0,x.endAt-Date.now());x.endAt=null;save();admin()}
+function reject(qid){let q=db.requests.find(x=>x.id===qid);q.status="rejected";if(q.type==="complete_task"){let t=db.tasks.find(x=>x.id===q.taskId);if(t){t.status="active";t.started=Date.now()-(t.paused||0)}}save();admin()}
+function endItem(i){let x=db.inventory[i];x.active=false;x.paused=false;x.endAt=null;x.remaining=0;save();admin()}
+function override(i){let t=db.tasks.find(x=>x.id===i);if(!t)return;t.status="completed";t.paused=t.paused||Date.now()-t.started;let r=R[t.rarity];awardTaskReward(r.bc);addXP(r.xp);db.stats.completed++;db.daily.completed++;db.history.push({prompt:t.prompt,rarity:t.rarity,reward:r.bc,xp:r.xp,percent:100,date:Date.now()});save();admin()}
+function open(x){document.getElementById("modalBox").innerHTML=x;document.getElementById("modal").classList.remove("hidden")}
+function closeM(){document.getElementById("modal").classList.add("hidden")}
+function audioStart(){if(!db.settings.music)return;try{let A=window.AudioContext||window.webkitAudioContext;if(!window._ac)window._ac=new A();let ac=window._ac,notes=[261.63,329.63,392,523.25],i=0;clearInterval(window._musicTimer);window._musicTimer=setInterval(()=>{if(!db.settings.music)return;let o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.value=notes[i++%notes.length];g.gain.value=(Number(db.settings.volume)/100)*.012;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.8)},1200)}catch(e){}}
+document.addEventListener("click",()=>{audioStart()},{once:true});
+save();home();
+</script>
+</body>
+</html>
