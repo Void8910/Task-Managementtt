@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuestForge</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(135deg,#06152e,#0b4aa2);color:#fff;min-height:100vh}
+button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:14px;padding:12px 16px;background:#1976d2;color:#fff;font-weight:700;box-shadow:0 4px 12px #0003}button:hover{filter:brightness(1.1)}
+.app{max-width:1100px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.brand{font-size:28px;font-weight:900}.coins{display:flex;gap:8px;flex-wrap:wrap}.coin{padding:8px 12px;border-radius:20px;background:#ffffff18}.bronze{color:#e6a15a}.gold{color:#ffd84d}.diamond{color:#9ff7ff}
+.card{background:#ffffff12;border:1px solid #ffffff22;border-radius:20px;padding:18px;margin-bottom:16px;backdrop-filter:blur(8px)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.nav{min-height:120px;text-align:left;font-size:18px;background:linear-gradient(145deg,#1674d1,#164a9a)}.nav small{display:block;font-weight:400;opacity:.8;margin-top:8px}.back{margin-bottom:14px;background:#ffffff18}.muted{opacity:.75}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.tag{padding:5px 9px;border-radius:10px;background:#ffffff18;font-size:12px}.task{border-left:5px solid #4bb3ff}.task h3{margin:0 0 6px}.reward{font-weight:800}.timer{font-size:22px;font-weight:900}.success{color:#9dffb0}.input,select{width:100%;padding:12px;border-radius:12px;border:1px solid #ffffff30;background:#071a37;color:#fff;margin:6px 0 12px}.avatar{font-size:50px}.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.modalbox{max-width:460px;width:100%;background:#09224a;border:1px solid #ffffff2b;border-radius:22px;padding:22px}.footer{opacity:.6;text-align:center;font-size:12px;margin:24px}
+@media(max-width:600px){.brand{font-size:23px}}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<div id="modal" class="modal hidden"><div id="modalBox" class="modalbox"></div></div>
+<script>
+const ADMIN_USER="Void",ADMIN_PASS="Void8910strawberrymilk";
+const R={
+"Super Easy":{min:5,drop:0,bc:3,xp:10},"Easy":{min:10,drop:0,bc:5,xp:15},
+"Medium Short":{min:15,drop:0,bc:10,xp:30},"Medium Long":{min:25,drop:10,bc:15,xp:40},
+"Hard Short":{min:30,drop:10,bc:25,xp:60},"Hard Long":{min:45,drop:10,bc:45,xp:100},
+"Super Hard":{min:60,drop:10,bc:75,xp:150},"Insane":{min:60,drop:10,bc:100,xp:300}};
+const SHOP=[
+["Free Pass",1,3,"5 hours"],["Free Pass",2,6,"10 hours"],["Free Pass",3,15,"Entire day"],
+["Shield",1,6,"5 hours"],["Shield",2,12,"10 hours"],["Shield",3,30,"Entire day"],
+["Game Pass",1,25,"30 min • Skate • Fall Guys • Fortnite"],
+["Game Pass",2,50,"1 hour • Tier 1 + Minecraft offline • GTA V offline • Ultimate Chicken Horse"],
+["Stay Pass",1,5,"5 minutes"],["Stay Pass",2,20,"30 minutes"],["Stay Pass",3,50,"Entire day"],
+["XP Pass",1,10,"10 XP"],["XP Pass",2,25,"50 XP"],["XP Pass",3,60,"100 XP"]];
+let db=JSON.parse(localStorage.getItem("questforge")||"null")||{profile:{name:"Player",level:1,xp:0,bronze:0,gold:0,diamond:0,avatar:"🧑‍🚀"},tasks:[],history:[],inventory:[],requests:[],settings:{music:true,volume:40},next:1};
+const save=()=>localStorage.setItem("questforge",JSON.stringify(db));
+const newId=()=>db.next++;
+const need=()=>100+(db.profile.level-1)*10;
+function addXP(n){db.profile.xp+=n;while(db.profile.xp>=need()){db.profile.xp-=need();db.profile.level++;db.profile.bronze+=5+db.profile.level}}
+function coins(){return `<div class="coins"><span class="coin bronze">🟤 ${db.profile.bronze}</span><span class="coin gold">🟡 ${db.profile.gold}</span><span class="coin diamond">💎 ${db.profile.diamond}</span></div>`}
+function layout(c){document.getElementById("app").innerHTML=`<div class="top"><div class="brand">⚔️ QuestForge</div>${coins()}</div>${c}<div class="footer">Local version • saved on this device</div>`}
+function back(){home()}
+function home(){layout(`<div class="card row"><div><div class="avatar">${db.profile.avatar}</div><b>${db.profile.name}</b><div class="muted">Level ${db.profile.level} • ${db.profile.xp}/${need()} XP</div></div><button onclick="settings()">⚙️ Settings</button></div><div class="grid">
+<button class="nav" onclick="current()">⏱️ Current Tasks<small>Active tasks and paused submissions</small></button>
+<button class="nav" onclick="available()">📋 Available Tasks<small>Tasks ready to accept</small></button>
+<button class="nav" onclick="shop()">🛒 Shop<small>Passes, shields and XP</small></button>
+<button class="nav" onclick="inventory()">🎒 Inventory<small>Your purchased items</small></button>
+<button class="nav" onclick="historyPage()">📜 Completed / Past<small>Previous tasks and rewards</small></button>
+<button class="nav" onclick="stats()">👤 Account Stats<small>Level, XP and balances</small></button></div>`)}
+function stats(){layout(`<button onclick="back()">← Back</button><div class="card"><h2>👤 Account Stats</h2><div class="avatar">${db.profile.avatar}</div><h3>${db.profile.name}</h3><p>⭐ Level ${db.profile.level}</p><p>XP: ${db.profile.xp}/${need()}</p>${coins()}<button onclick="rename()">✏️ Change Name</button></div>`)}
+function rename(){open(`<h2>Change Name</h2><input id="nn" class="input" placeholder="New name"><button onclick="doRename()">Save</button> <button onclick="closeM()">Cancel</button>`)}
+function doRename(){let n=document.getElementById("nn").value.trim();if(n){db.profile.name=n;save();closeM();stats()}}
+function settings(){layout(`<button onclick="back()">← Back</button><div class="card"><h2>⚙️ Settings</h2><p>🎵 Music: ${db.settings.music?"On":"Off"}</p><button onclick="db.settings.music=!db.settings.music;save();settings()">Toggle Music</button><hr><button onclick="adminLogin()">🔐 Admin Version</button></div>`)}
+function adminLogin(){open(`<h2>Admin Version</h2><input id="au" class="input" placeholder="Username"><input id="ap" type="password" class="input" placeholder="Password"><button onclick="checkAdmin()">Enter</button> <button onclick="closeM()">Cancel</button>`)}
+function checkAdmin(){if(document.getElementById("au").value===ADMIN_USER&&document.getElementById("ap").value===ADMIN_PASS){closeM();admin()}else alert("Incorrect login.")}
+function available(){let a=db.tasks.filter(t=>t.status==="available");layout(`<button onclick="back()">← Back</button><h2>📋 Available Tasks</h2>${a.length?a.map(t=>task(t,true)).join(""):`<div class="card muted">No tasks available.</div>`}`)}
+function current(){let a=db.tasks.filter(t=>t.status==="active"||t.status==="submitted");layout(`<button onclick="back()">← Back</button><h2>⏱️ Current Tasks</h2>${a.length?a.map(t=>task(t,false)).join(""):`<div class="card muted">No current tasks.</div>`}`)}
+function task(t,canAccept){let r=R[t.rarity],e=t.status==="active"?Date.now()-t.started:t.paused||0,m=Math.floor(e/60000),s=Math.floor(e/1000)%60,d=r.drop?Math.floor(Math.max(0,m-r.min)/10):0,p=Math.max(0,Math.floor(r.bc*(1-d*.1)));return `<div class="card task"><div class="row"><div><span class="tag">${t.rarity}</span><h3>${t.prompt}</h3><div>Target ${r.min} min • Reward ${p}/${r.bc} 🟤 • ${r.xp} XP</div></div><div class="timer">${m}:${String(s).padStart(2,"0")}</div></div>${canAccept?`<button onclick="accept(${t.id})">▶️ Accept Task</button>`:t.status==="active"?`<button onclick="submit(${t.id})">✅ I'm Done</button>`:`<div class="success">📨 Submitted — timer paused; waiting for admin.</div>`}</div>`}
+function accept(i){let t=db.tasks.find(x=>x.id===i);t.status="active";t.started=Date.now();save();current();tick()}
+function submit(i){let t=db.tasks.find(x=>x.id===i);t.paused=Date.now()-t.started;t.status="submitted";db.requests.push({id:newId(),type:"complete_task",taskId:i,status:"pending"});save();current()}
+function tick(){if(document.querySelector(".timer"))setTimeout(()=>{if(document.querySelector(".timer")){current();tick()}},1000)}
+function historyPage(){layout(`<button onclick="back()">← Back</button><h2>📜 Completed / Past</h2>${db.history.length?db.history.slice().reverse().map(h=>`<div class="card"><b>${h.prompt}</b><div>${h.rarity} • ${h.reward} 🟤 • ${h.xp} XP</div><div class="muted">${new Date(h.date).toLocaleString()}</div></div>`).join(""):`<div class="card muted">No past tasks.</div>`}`)}
+function shop(){layout(`<button onclick="back()">← Back</button><h2>🛒 Shop</h2><div class="grid">${SHOP.map((s,i)=>`<div class="card"><b>${s[0]} Tier ${s[1]}</b><p class="muted">${s[3]}</p><p>🟤 ${s[2]}</p><button onclick="buy(${i})">Buy</button></div>`).join("")}</div>`)}
+function buy(i){let s=SHOP[i];if(db.profile.bronze<s[2])return alert("Not enough Bronze Coins.");db.profile.bronze-=s[2];if(s[0]==="XP Pass")addXP([10,50,100][s[1]-1]);else db.inventory.push({id:newId(),name:s[0],tier:s[1],duration:s[3],active:false});save();shop()}
+function inventory(){layout(`<button onclick="back()">← Back</button><h2>🎒 Inventory</h2>${db.inventory.length?db.inventory.map((x,i)=>`<div class="card row"><div><b>${x.name} Tier ${x.tier}</b><div class="muted">${x.duration}</div></div><button onclick="useItem(${i})">Use</button></div>`).join(""):`<div class="card muted">Inventory empty.</div>`}`)}
+function useItem(i){db.requests.push({id:newId(),type:"use_item",inventoryIndex:i,status:"pending"});save();alert("Use request sent to Admin Version.");inventory()}
+function admin(){let q=db.requests.filter(x=>x.status==="pending");layout(`<div class="row"><button onclick="back()">← Player View</button><h2>🛠️ Admin</h2></div><div class="card"><h3>➕ Create Task</h3><input id="tp" class="input" placeholder="Example: Do the dishes (put away and put in)"><select id="rr" class="input">${Object.keys(R).map(x=>`<option>${x}</option>`).join("")}</select><button onclick="createTask()">Create Task</button></div><div class="card"><h3>📨 Requests (${q.length})</h3>${q.length?q.map(request).join(""):`<span class="muted">Nothing waiting.</span>`}</div><div class="card"><h3>📊 Player</h3>${db.profile.name} • Level ${db.profile.level} • ${db.profile.xp}/${need()} XP<br>${coins()}</div><div class="card"><h3>📋 Tasks</h3>${db.tasks.map(t=>`<div class="row"><span>${t.prompt} — ${t.status}</span>${t.status==="active"?`<button onclick="override(${t.id})">Override</button>`:""}</div>`).join("")||"No tasks."}</div>`)}
+function createTask(){let p=document.getElementById("tp").value.trim(),r=document.getElementById("rr").value;if(!p)return alert("Enter a task prompt.");db.tasks.push({id:newId(),prompt:p,rarity:r,status:"available"});save();admin()}
+function request(q){if(q.type==="complete_task"){let t=db.tasks.find(x=>x.id===q.taskId);return `<div class="card"><b>✅ Complete Task</b><p>${t?t.prompt:"Missing task"}</p><button onclick="approve(${q.id})">Approve</button> <button onclick="reject(${q.id})">Reject</button></div>`}let x=db.inventory[q.inventoryIndex];return `<div class="card"><b>🎒 Use Item</b><p>${x?x.name+" Tier "+x.tier:"Missing item"}</p><button onclick="approveItem(${q.id})">Approve</button> <button onclick="reject(${q.id})">Reject</button></div>`}
+function approve(qid){let q=db.requests.find(x=>x.id===qid),t=db.tasks.find(x=>x.id===q.taskId),r=R[t.rarity],m=(t.paused||0)/60000,d=r.drop?Math.floor(Math.max(0,m-r.min)/10):0,p=Math.max(0,Math.floor(r.bc*(1-d*.1)));t.status="completed";q.status="approved";db.profile.bronze+=p;addXP(r.xp);db.history.push({prompt:t.prompt,rarity:t.rarity,reward:p,xp:r.xp,date:Date.now()});save();admin()}
+function approveItem(qid){let q=db.requests.find(x=>x.id===qid),x=db.inventory[q.inventoryIndex];if(x)x.active=true;q.status="approved";save();admin()}
+function reject(qid){let q=db.requests.find(x=>x.id===qid);q.status="rejected";if(q.type==="complete_task"){let t=db.tasks.find(x=>x.id===q.taskId);if(t){t.status="active";t.started=Date.now()-(t.paused||0)}}save();admin()}
+function override(i){let t=db.tasks.find(x=>x.id===i);t.status="completed";save();admin()}
+function open(x){document.getElementById("modalBox").innerHTML=x;document.getElementById("modal").classList.remove("hidden")}
+function closeM(){document.getElementById("modal").classList.add("hidden")}
+save();home();
+</script>
+</body>
+</html>
